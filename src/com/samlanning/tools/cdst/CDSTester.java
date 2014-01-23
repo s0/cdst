@@ -186,9 +186,10 @@ public class CDSTester<InputType, OutputType> {
         if(!this.nextExpectedComm.isOutput()){
             // Have received output when not supposed to
             this.handler.fail("Received unexpected output from stream, was " +
-                              "expecting input: " +
+                              "going to input: " +
                               this.nextExpectedComm.input.toString() +
-                              " and instead output: " + object.toString());
+                              " after delay, but instead received output: " + 
+                              object.toString());
             
             // Stop testing
             this.state = TesterState.STOPPED;
@@ -198,12 +199,27 @@ public class CDSTester<InputType, OutputType> {
             // this.lock: 0 -> 1
             // this.readWait: 0 -> 0
             this.release(this.lock);
+        } else {
+            // An output is expected, lets check it is the correct output
+
+            if(!this.nextExpectedComm.isOutput(object)){
+                // Invalid Output!
+                // Have received output when not supposed to
+                this.handler.fail("Received incorrect output from stream, was " +
+                                  "expecting: " +
+                                  this.nextExpectedComm.output.toString() +
+                                  " but instead received: " + 
+                                  object.toString());
+                
+                // Stop testing
+                this.state = TesterState.STOPPED;
+            }
+            
+            // Pass the Baton
+            // this.lock: 0 -> 0
+            // this.readWait: 0 -> 1
+            this.release(this.readWait);
         }
-        
-        // Pass the Baton
-        // this.lock: 0 -> 0
-        // this.readWait: 0 -> 1
-        this.release(this.readWait);
     }
     
     private void doLoop() throws CDSTException {
@@ -239,6 +255,8 @@ public class CDSTester<InputType, OutputType> {
                 
                 // Check that we are still running
                 if(this.state == TesterState.STOPPED){
+                    // this.lock: 0 -> 1
+                    // this.readWait: 0 -> 0
                     this.release(this.lock);
                     return;
                 }
@@ -263,6 +281,14 @@ public class CDSTester<InputType, OutputType> {
                 // this.lock: 0 -> 0
                 // this.readWait: 1 -> 0
                 this.acquire(this.readWait);
+                
+                // Check that we are still running
+                if(this.state == TesterState.STOPPED){
+                    // this.lock: 0 -> 1
+                    // this.readWait: 0 -> 0
+                    this.release(this.lock);
+                    return;
+                }
                 
                 // Now loop round again
                 
