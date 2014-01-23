@@ -61,15 +61,24 @@ public class TelnetServer {
         tester.run();
         
         server.close();
+        socket.close();
     }
     
     public static void setupTester() throws CDSTException {
         
         tester.setHandler(new Handler());
+        tester.setLogLevel(CDSTester.L_ALL);
         
-        tester.addInputWrite("ABCD");
+        tester.addInputWrite("Hello");
+        tester.addInputWrite("How are you today?");
         
-        tester.addOutputRead("ABCD");
+        tester.addOutputRead("Good");
+        
+        tester.addInputWrite("Great");
+        
+        tester.addOutputRead("Yourself?");
+        
+        tester.addInputWrite("Great, thanks for asking!");
         
     }
     

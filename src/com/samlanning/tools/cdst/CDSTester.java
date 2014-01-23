@@ -17,6 +17,19 @@ import java.util.concurrent.Semaphore;
  *
  */
 public class CDSTester<InputType, OutputType> {
+    
+    // Log Levels
+    // Logs are written to stdout
+    public static final int L_NONE = 0x0;
+    public static final int L_INFO = 0x1;
+    public static final int L_INPUT = 0x2;
+    public static final int L_OUTPUT = 0x4;
+    public static final int L_INTERNALS = 0x8;
+    
+    public static final int L_INTERACTION = L_INPUT | L_OUTPUT;
+    public static final int L_ALL = L_INFO | L_INPUT | L_OUTPUT | L_INTERNALS;
+    
+    private int logLevel = L_NONE;
 
     /**
      * How long should the tester wait before writing to the input to try and
@@ -87,6 +100,10 @@ public class CDSTester<InputType, OutputType> {
         this.handler = handler;
     }
     
+    public void setLogLevel(int logLevel){
+        this.logLevel = logLevel;
+    }
+    
     // ***************
     // Methods used to build up list of communications
     
@@ -139,7 +156,7 @@ public class CDSTester<InputType, OutputType> {
         
         this.assertPreparing();
         
-        System.out.println("Running Tester");
+        this.log("Running", CDSTester.L_INFO);
 
         // Have Baton
         // this.lock: 0
@@ -168,7 +185,7 @@ public class CDSTester<InputType, OutputType> {
     
     private void doRead(OutputType object) throws CDSTException {
         
-        System.out.println("Read: " + object.toString());
+        this.log("Read: " + object.toString(), CDSTester.L_OUTPUT);
         
         // this.lock: 1 -> 0
         // this.readWait: 0 -> 0
@@ -228,17 +245,21 @@ public class CDSTester<InputType, OutputType> {
         // this.readWait: 0
         
         while(true){
-            System.out.println("next");
+            
+            this.log("Next Communication...", CDSTester.L_INTERNALS);
             
             try {
                 this.nextExpectedComm = this.iter.next();
             } catch (NoSuchElementException e) {
                 this.state = TesterState.STOPPED;
-                System.out.println("Finished");
+                this.log("Finished (success)", CDSTester.L_INFO);
                 // Release Baton
                 this.release(this.lock);
                 return;
             }
+            
+            this.log("... is: " + this.nextExpectedComm.toString(),
+                     CDSTester.L_INTERNALS);
             
             // Inspect what the next communication is
             if(this.nextExpectedComm.isInput()){
@@ -262,6 +283,8 @@ public class CDSTester<InputType, OutputType> {
                 }
                 
                 // Now send input
+                this.log("Writing: " + this.nextExpectedComm.input,
+                         CDSTester.L_INPUT);
                 this.handler.writeToStream(this.nextExpectedComm.input);
                 
                 // And now loop back for next communication
@@ -333,6 +356,16 @@ public class CDSTester<InputType, OutputType> {
         }
     }
     
+    /**
+     * Log something at a specific log level
+     * @param msg
+     * @param logLevel
+     */
+    private void log(String msg, int logLevel){
+        if((logLevel & this.logLevel) > 0)
+            System.out.println("[CDST] " + msg);
+    }
+    
     // End
     // ***************
     
@@ -363,11 +396,20 @@ public class CDSTester<InputType, OutputType> {
         }
         
         public boolean isOutput(OutputType object){
-            return this.output == object;
+            
+            return this.output.equals(object);
         }
         
         public boolean isOutput(){
             return this.output != null;
+        }
+        
+        public String toString(){
+            if(this.isInput())
+                return "INPUT (" + this.input.toString() + ")";
+            else
+                return "OUTPUT (" + this.output.toString() + ")";
+                
         }
     }
     
