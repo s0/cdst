@@ -13,20 +13,22 @@ which you can test it.
 
 Example Code:
 
-    // Taken from examples.TelnetServer
+```java
+// Taken from examples.TelnetServer
 
-    CDSTester<String, String> tester = new CDSTester<String, String>(2000);
+CDSTester<String, String> tester = new CDSTester<String, String>(2000);
 
-    tester.addInputWrite("Hello");
-    tester.addInputWrite("How are you today?");
+tester.addInputWrite("Hello");
+tester.addInputWrite("How are you today?");
 
-    tester.addOutputRead("Good");
+tester.addOutputRead("Good");
 
-    tester.addInputWrite("Great");
+tester.addInputWrite("Great");
 
-    tester.addOutputRead("Yourself?");
+tester.addOutputRead("Yourself?");
 
-    tester.addInputWrite("Great, thanks for asking!");
+tester.addInputWrite("Great, thanks for asking!");
+```
 
 The "inputs" and "output" can be of any type you like, and can even be
 different.
@@ -44,3 +46,37 @@ which may be counter-intuitive.
 *Note: this is the reverse of how we usually treat input and output, with
 respect to a client or server, not the "wires" (the stream).*
 
+## Example
+
+There is an example program using the `CDSTester` class in the examples
+package (the code above is taken from there).
+
+It is a basic telnet server, so when launched you can telnet to it, and
+interact with it to see how it catches undesireable behaviour.
+
+## Features
+
+* Designed for 2-Thread designs (for true duplex connections)
+* *Use-Case and Test-Suite agnostic:* Can use JUnit or not, and use for
+  anything, like TCP, Bluetooth, and any layer of abstraction for
+  communication.
+* Specify the test specification easily, synchronously.
+* Can use custom types for each direction of the stream.
+
+## License
+
+ISC License (ISC)
+
+Copyright (c) 2014, Sam Lanning <sam@samlanning.com>
+
+Permission to use, copy, modify, and/or distribute this software for any
+purpose with or without fee is hereby granted, provided that the above
+copyright notice and this permission notice appear in all copies.
+
+THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES WITH
+REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND
+FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT,
+INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+LOSS OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR
+OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+PERFORMANCE OF THIS SOFTWARE.
