@@ -31,7 +31,7 @@ import java.util.concurrent.Semaphore;
  * failures, and then you can specify a synchronous list of "communications"
  * to test the stream.
  * 
- * @author sam@samlanning.com
+ * @author Sam Lanning <sam@samlanning.com>@samlanning.com
  *
  */
 public class CDSTester<InputType, OutputType> {
@@ -147,6 +147,31 @@ public class CDSTester<InputType, OutputType> {
         comms.add(new Communication(CommunicationType.INPUT, object));
     }
     
+    /**
+     * Tell the tester to expect some output from the stream at this point, and
+     * pass the object to the handler.
+     * @param handler
+     * @throws CDSTException 
+     */
+    public void addOutputRead(CDSTReadHandler<OutputType> handler)
+            throws CDSTException {
+        
+        this.assertPreparing();
+        comms.add(new Communication(handler));
+    }
+    
+    /**
+     * Tell the tester to write to the stream at this point, using a handler.
+     * @param handler
+     * @throws CDSTException 
+     */
+    public void addInputWrite(CDSTWriteHandler<InputType> handler)
+            throws CDSTException {
+        
+        this.assertPreparing();
+        comms.add(new Communication(handler));
+    }
+    
     // End
     // ***************
     
@@ -222,7 +247,7 @@ public class CDSTester<InputType, OutputType> {
             // Have received output when not supposed to
             this.handler.fail("Received unexpected output from stream, was " +
                               "going to input: " +
-                              this.nextExpectedComm.input.toString() +
+                              this.nextExpectedComm.getInput().toString() +
                               " after delay, but instead received output: " + 
                               object.toString());
             
@@ -239,12 +264,24 @@ public class CDSTester<InputType, OutputType> {
 
             if(!this.nextExpectedComm.isOutput(object)){
                 // Invalid Output!
-                // Have received output when not supposed to
-                this.handler.fail("Received incorrect output from stream, was " +
-                                  "expecting: " +
-                                  this.nextExpectedComm.output.toString() +
-                                  " but instead received: " + 
-                                  object.toString());
+                
+                if(this.nextExpectedComm.output != null)
+                
+                    // Have received output when not supposed to
+                    this.handler.fail("Received incorrect output from " +
+                                      "stream, was expecting: " +
+                                      this.nextExpectedComm.output.toString() +
+                                      " but instead received: " + 
+                                      object.toString());
+                
+                else
+                    
+                    // Have received output when not supposed to
+                    this.handler.fail("Received incorrect output from " +
+                                      "stream, check handled by: " +
+                                      this.nextExpectedComm.outputHandler +
+                                      " but received: " + 
+                                      object.toString());
                 
                 // Stop testing
                 this.state = TesterState.STOPPED;
@@ -301,9 +338,9 @@ public class CDSTester<InputType, OutputType> {
                 }
                 
                 // Now send input
-                this.log("Writing: " + this.nextExpectedComm.input,
+                this.log("Writing: " + this.nextExpectedComm.getInput(),
                          CDSTester.L_INPUT);
-                this.handler.writeToStream(this.nextExpectedComm.input);
+                this.handler.writeToStream(this.nextExpectedComm.getInput());
                 
                 // And now loop back for next communication
                 
@@ -396,6 +433,9 @@ public class CDSTester<InputType, OutputType> {
     private class Communication {
         private InputType input;
         private OutputType output;
+        private CDSTWriteHandler<InputType> inputHandler;
+        private InputType inputHandlerCache;
+        private CDSTReadHandler<OutputType> outputHandler;
         
         @SuppressWarnings("unchecked")
         public Communication(CommunicationType type, Object object){
@@ -409,24 +449,49 @@ public class CDSTester<InputType, OutputType> {
             }
         }
         
-        public boolean isInput(){
-            return this.input != null;
+        public Communication(CDSTWriteHandler<InputType> handler){
+            this.inputHandler = handler;
         }
         
-        public boolean isOutput(OutputType object){
+        public Communication(CDSTReadHandler<OutputType> handler){
+            this.outputHandler = handler;
+        }
+        
+        public boolean isInput(){
+            return this.input != null || this.inputHandler != null;
+        }
+        
+        public InputType getInput(){
+            if(this.input != null)
+                return this.input;
+            else
+                if(this.inputHandlerCache != null)
+                    return this.inputHandlerCache;
+                else
+                    return this.inputHandlerCache = this.inputHandler.write();
             
-            return this.output.equals(object);
         }
         
         public boolean isOutput(){
-            return this.output != null;
+            return this.output != null || this.outputHandler != null;
+        }
+        
+        public boolean isOutput(OutputType object){
+            if(this.output != null)
+                return this.output.equals(object);
+            else
+                return this.outputHandler.read(object);
         }
         
         public String toString(){
-            if(this.isInput())
+            if(this.input != null)
                 return "INPUT (" + this.input.toString() + ")";
-            else
+            else if(this.inputHandler != null)
+                return "INPUT (" + this.inputHandler.toString() + ")";
+            else if(this.output != null)
                 return "OUTPUT (" + this.output.toString() + ")";
+            else
+                return "INPUT (" + this.outputHandler.toString() + ")";
                 
         }
     }

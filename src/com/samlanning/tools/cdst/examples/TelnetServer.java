@@ -28,13 +28,15 @@ import java.net.Socket;
 import com.samlanning.tools.cdst.CDSTException;
 import com.samlanning.tools.cdst.CDSTHandler;
 import com.samlanning.tools.cdst.CDSTester;
+import com.samlanning.tools.cdst.CDSTReadHandler;
+import com.samlanning.tools.cdst.CDSTWriteHandler;
 
 /**
  * This example program listens on a specific port for a single connection
  * which it then tests with CDSTester.
  * 
  * Run it and telnet to port 9999
- * @author sam
+ * @author Sam Lanning <sam@samlanning.com>
  *
  */
 public class TelnetServer {
@@ -78,7 +80,6 @@ public class TelnetServer {
         
         tester.run();
         
-        server.close();
         socket.close();
     }
     
@@ -90,9 +91,33 @@ public class TelnetServer {
         tester.addInputWrite("Hello");
         tester.addInputWrite("How are you today?");
         
-        tester.addOutputRead("Good");
+        final Container<String> result = new Container<String>();
         
-        tester.addInputWrite("Great");
+        tester.addOutputRead(new CDSTReadHandler<String>(){
+
+            @Override
+            public boolean read(String output) {
+                if(output.equals("Good") || output.equals("Bad")){
+                    result.object = output;
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+            
+        });
+        
+        tester.addInputWrite(new CDSTWriteHandler<String>() {
+
+            @Override
+            public String write() {
+                if(result.object.equals("Good"))
+                    return "Great to hear!";
+                else
+                    return "Oh I' sorry to hear that!";
+            }
+            
+        });
         
         tester.addOutputRead("Yourself?");
         
@@ -102,6 +127,10 @@ public class TelnetServer {
     
     public static class TCPMessage {
         //TODO
+    }
+    
+    public static class Container<T> {
+        public T object;
     }
     
     public static class Handler implements CDSTHandler<String> {
@@ -124,7 +153,7 @@ public class TelnetServer {
     
     /**
      * Thread class to listen to the output from the socket (stream)
-     * @author sam
+     * @author Sam Lanning <sam@samlanning.com>
      *
      */
     public static class OutputListener extends Thread {

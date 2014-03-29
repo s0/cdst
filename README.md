@@ -21,9 +21,35 @@ CDSTester<String, String> tester = new CDSTester<String, String>(2000);
 tester.addInputWrite("Hello");
 tester.addInputWrite("How are you today?");
 
-tester.addOutputRead("Good");
+final Container<String> result = new Container<String>();
 
-tester.addInputWrite("Great");
+// Check the output on demand
+tester.addOutputRead(new CDSTReadHandler<String>(){
+
+    @Override
+    public boolean read(String output) {
+        if(output.equals("Good") || output.equals("Bad")){
+            result.object = output;
+            return true;
+        } else {
+            return false;
+        }
+    }
+    
+});
+
+// Provide input on demand
+tester.addInputWrite(new CDSTWriteHandler<String>() {
+
+    @Override
+    public String write() {
+        if(result.object.equals("Good"))
+            return "Great to hear!";
+        else
+            return "Oh I' sorry to hear that!";
+    }
+    
+});
 
 tester.addOutputRead("Yourself?");
 
@@ -62,6 +88,8 @@ interact with it to see how it catches undesireable behaviour.
   communication.
 * Specify the test specification easily, synchronously.
 * Can use custom types for each direction of the stream.
+* (NEW) Can provide handlers (instead of specific instances) to write input and
+  read + check output on demand.
 
 ## License
 
