@@ -27,12 +27,11 @@ final Container<String> result = new Container<String>();
 tester.addOutputRead(new CDSTReadHandler<String>(){
 
     @Override
-    public boolean read(String output) {
+    public void read(String output) throws Exception {
         if(output.equals("Good") || output.equals("Bad")){
             result.object = output;
-            return true;
         } else {
-            return false;
+            throw new Exception("Not 'Good' or 'Bad'!");
         }
     }
     

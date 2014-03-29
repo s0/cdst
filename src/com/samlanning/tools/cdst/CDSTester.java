@@ -245,11 +245,11 @@ public class CDSTester<InputType, OutputType> {
         // Have lock
         if(!this.nextExpectedComm.isOutput()){
             // Have received output when not supposed to
-            this.handler.fail("Received unexpected output from stream, was " +
-                              "going to input: " +
-                              this.nextExpectedComm.getInput().toString() +
-                              " after delay, but instead received output: " + 
-                              object.toString());
+            this.handler.fail(String.format(
+                "Received unexpected output from stream, was going to input: " +
+                "'%s' after delay, but instead received output: '%s'",
+                this.nextExpectedComm.getInput(),
+                object));
             
             // Stop testing
             this.state = TesterState.STOPPED;
@@ -262,26 +262,7 @@ public class CDSTester<InputType, OutputType> {
         } else {
             // An output is expected, lets check it is the correct output
 
-            if(!this.nextExpectedComm.isOutput(object)){
-                // Invalid Output!
-                
-                if(this.nextExpectedComm.output != null)
-                
-                    // Have received output when not supposed to
-                    this.handler.fail("Received incorrect output from " +
-                                      "stream, was expecting: " +
-                                      this.nextExpectedComm.output.toString() +
-                                      " but instead received: " + 
-                                      object.toString());
-                
-                else
-                    
-                    // Have received output when not supposed to
-                    this.handler.fail("Received incorrect output from " +
-                                      "stream, check handled by: " +
-                                      this.nextExpectedComm.outputHandler +
-                                      " but received: " + 
-                                      object.toString());
+            if(!this.nextExpectedComm.checkOutput(object)){
                 
                 // Stop testing
                 this.state = TesterState.STOPPED;
@@ -476,11 +457,32 @@ public class CDSTester<InputType, OutputType> {
             return this.output != null || this.outputHandler != null;
         }
         
-        public boolean isOutput(OutputType object){
+        public boolean checkOutput(OutputType object) {
             if(this.output != null)
-                return this.output.equals(object);
-            else
-                return this.outputHandler.read(object);
+                if(this.output.equals(object))
+                    return true;
+                else {
+                    // Have received invalid output.
+                    CDSTester.this.handler.fail(String.format(
+                        "Received incorrect output from stream, was " +
+                        "expecting: '%s' but instead received: '%s'",
+                        this.output,
+                        object));
+                    return false;
+                }
+                else
+                    try {
+                        this.outputHandler.read(object);
+                        return true;
+                    } catch (Exception e) {
+                        CDSTester.this.handler.fail(String.format(
+                            "Received incorrect output from stream, " + 
+                            "CDSTReadHandler gave exception: '%s' after " +
+                            "receiving: '%s'",
+                            e,
+                            object));
+                        return false;
+                    }
         }
         
         public String toString(){

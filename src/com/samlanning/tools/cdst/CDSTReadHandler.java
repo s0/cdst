@@ -10,9 +10,9 @@ package com.samlanning.tools.cdst;
 public interface CDSTReadHandler<OutputType> {
     
     /**
-     * Test the output, and return true if it is valid
+     * Test the output, and raise an exception if it is invalid.
      * @param output
-     * @return
+     * @throws Exception
      */
-    public boolean read(OutputType output);
+    public void read(OutputType output) throws Exception;
 }
