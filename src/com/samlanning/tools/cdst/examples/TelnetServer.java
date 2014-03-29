@@ -135,7 +135,7 @@ public class TelnetServer {
     public static class Handler implements CDSTHandler<String> {
 
         @Override
-        public void fail(String message) {
+        public void fail(String message, Exception trace) {
             System.out.println("Error: " + message);
             try {
                 socket.close();

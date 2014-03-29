@@ -49,13 +49,13 @@ public class SetupTest {
         CDSTester<String, String> t = new CDSTester<String, String>();
         
         t.setHandler(new CDSTHandler<String>(){
-            public void fail(String message) {}
+            public void fail(String message, Exception trace) {}
             public void writeToStream(String input) {}
         });
         
         try {
             t.setHandler(new CDSTHandler<String>(){
-                public void fail(String message) {}
+                public void fail(String message, Exception trace) {}
                 public void writeToStream(String input) {}
             });
             fail("Didn't Raise Exception");

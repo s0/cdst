@@ -133,7 +133,8 @@ public class CDSTester<InputType, OutputType> {
     public void addOutputRead(OutputType object) throws CDSTException {
         
         this.assertPreparing();
-        comms.add(new Communication(CommunicationType.OUTPUT, object));
+        comms.add(new Communication(CommunicationType.OUTPUT, object,
+                new Exception()));
     }
     
     /**
@@ -144,7 +145,8 @@ public class CDSTester<InputType, OutputType> {
     public void addInputWrite(InputType object) throws CDSTException {
         
         this.assertPreparing();
-        comms.add(new Communication(CommunicationType.INPUT, object));
+        comms.add(new Communication(CommunicationType.INPUT, object,
+                new Exception()));
     }
     
     /**
@@ -157,7 +159,7 @@ public class CDSTester<InputType, OutputType> {
             throws CDSTException {
         
         this.assertPreparing();
-        comms.add(new Communication(handler));
+        comms.add(new Communication(handler, new Exception()));
     }
     
     /**
@@ -169,7 +171,7 @@ public class CDSTester<InputType, OutputType> {
             throws CDSTException {
         
         this.assertPreparing();
-        comms.add(new Communication(handler));
+        comms.add(new Communication(handler, new Exception()));
     }
     
     // End
@@ -249,7 +251,8 @@ public class CDSTester<InputType, OutputType> {
                 "Received unexpected output from stream, was going to input: " +
                 "'%s' after delay, but instead received output: '%s'",
                 this.nextExpectedComm.getInput(),
-                object));
+                object),
+                this.nextExpectedComm.trace);
             
             // Stop testing
             this.state = TesterState.STOPPED;
@@ -418,8 +421,12 @@ public class CDSTester<InputType, OutputType> {
         private InputType inputHandlerCache;
         private CDSTReadHandler<OutputType> outputHandler;
         
+        public final Exception trace;
+        
         @SuppressWarnings("unchecked")
-        public Communication(CommunicationType type, Object object){
+        public Communication(CommunicationType type, Object object
+                , Exception trace){
+            this.trace = trace;
             switch(type){
             case INPUT:
                 this.input = (InputType) object;
@@ -430,11 +437,15 @@ public class CDSTester<InputType, OutputType> {
             }
         }
         
-        public Communication(CDSTWriteHandler<InputType> handler){
+        public Communication(CDSTWriteHandler<InputType> handler
+                , Exception trace){
+            this.trace = trace;
             this.inputHandler = handler;
         }
         
-        public Communication(CDSTReadHandler<OutputType> handler){
+        public Communication(CDSTReadHandler<OutputType> handler
+                , Exception trace){
+            this.trace = trace;
             this.outputHandler = handler;
         }
         
@@ -467,7 +478,8 @@ public class CDSTester<InputType, OutputType> {
                         "Received incorrect output from stream, was " +
                         "expecting: '%s' but instead received: '%s'",
                         this.output,
-                        object));
+                        object),
+                        this.trace);
                     return false;
                 }
                 else
@@ -480,7 +492,8 @@ public class CDSTester<InputType, OutputType> {
                             "CDSTReadHandler gave exception: '%s' after " +
                             "receiving: '%s'",
                             e,
-                            object));
+                            object),
+                            this.trace);
                         return false;
                     }
         }

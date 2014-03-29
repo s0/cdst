@@ -23,8 +23,11 @@ public interface CDSTHandler<InputType> {
     /**
      * Handle the tester failing with a specific message.
      * @param message
+     * @param trace - An exception you can use to print the stack trace to
+     *        isolate the point at which the addOutputRead() or addInputWrite()
+     *        
      */
-    public void fail(String message);
+    public void fail(String message, Exception trace);
     
     /**
      * Fulfil a request from the tester to send input to the input stream.
