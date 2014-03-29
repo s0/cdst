@@ -31,7 +31,7 @@ import java.util.concurrent.Semaphore;
  * failures, and then you can specify a synchronous list of "communications"
  * to test the stream.
  * 
- * @author Sam Lanning <sam@samlanning.com>@samlanning.com
+ * @author Sam Lanning <sam@samlanning.com>
  *
  */
 public class CDSTester<InputType, OutputType> {
